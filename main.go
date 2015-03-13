@@ -5,8 +5,8 @@ import "io/ioutil"
 import "os"
 import "os/user"
 import "strconv"
-import "github.com/mgutz/ansi"
-import "github.com/howeyc/gopass"
+import _ "github.com/mgutz/ansi"
+import _ "github.com/howeyc/gopass"
 
 type Password struct {
 	bytes []byte
@@ -43,15 +43,21 @@ func (password Password) WithTempFile(block func(string)) error {
 	return nil
 }
 
+var (
+	commands = map[string](func(args... string) int){}
+)
 func main() {
-	fmt.Printf("Password: ")
-	password := Password{gopass.GetPasswdMasked()}
-	fmt.Println(ansi.Color(password.String(), "red"))
+	if len(os.Args) < 2 {
+		fmt.Println("usage: heracles <command> [<args>]") 
+		fmt.Println()
+		fmt.Println("Commands:")
+		os.Exit(1)
+	}
 
-	_ = password.WithTempFile(func(path string) {
-		fmt.Println(path)
-	})
-
-	password.Clear()
-	fmt.Printf("%v\n", password)
+	command := os.Args[1]
+	if handler, ok := commands[command]; ok {
+		handler()
+	} else {
+	fmt.Printf("heracles: '%s' is not a heracles command.\n", command)
+}
 }
