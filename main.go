@@ -3,6 +3,7 @@ package main
 import "fmt"
 import "io/ioutil"
 import "os"
+import "os/exec"
 import "os/user"
 import "strconv"
 import _ "github.com/mgutz/ansi"
@@ -43,21 +44,39 @@ func (password Password) WithTempFile(block func(string)) error {
 	return nil
 }
 
+func Run(name string, args ...string) error {
+	cmd := exec.Command(name, args...)
+	cmd.Run()
+	return nil
+}
+
+type Handler (func(args ...string) int)
+
 var (
-	commands = map[string](func(args... string) int){}
+	commands = map[string]Handler{
+		"init": Initialize,
+	}
 )
+
+func Initialize(args ...string) int {
+	Run("git", "init")
+	return 0
+}
+
 func main() {
 	if len(os.Args) < 2 {
-		fmt.Println("usage: heracles <command> [<args>]") 
+		fmt.Println("usage: heracles <command> [<args>]")
 		fmt.Println()
 		fmt.Println("Commands:")
+		fmt.Println("   init   Creates an empty heracles repository")
 		os.Exit(1)
 	}
 
 	command := os.Args[1]
 	if handler, ok := commands[command]; ok {
-		handler()
+		exit := handler()
+		os.Exit(exit)
 	} else {
-	fmt.Printf("heracles: '%s' is not a heracles command.\n", command)
-}
+		fmt.Printf("heracles: '%s' is not a heracles command.\n", command)
+	}
 }
