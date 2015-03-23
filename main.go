@@ -14,6 +14,20 @@ import (
 	"github.com/mgutz/ansi"
 )
 
+func Ask(prompt string) string {
+	prettyPrompt := ansi.Color(prompt+": ", "blue")
+	fmt.Print(prettyPrompt)
+
+	reader := bufio.NewReader(os.Stdin)
+	input, err := reader.ReadString('\n')
+	if err != nil {
+		panic(err)
+	}
+
+	input = strings.TrimSpace(input)
+	return input
+}
+
 func AskPassword(prompt string) Password {
 	prettyPrompt := ansi.Color(prompt+": ", "blue")
 	fmt.Print(prettyPrompt)
@@ -102,6 +116,9 @@ func Initialize(args ...string) (err error) {
 }
 
 func GenerateCA(args ...string) (err error) {
+	name := Ask("Name")
+	email := Ask("Email")
+
 	password := AskPassword("CA Password")
 	openSSLPassword, err := password.WritePasswordFile()
 	defer password.CleanUp()
@@ -115,7 +132,8 @@ func GenerateCA(args ...string) (err error) {
 		return
 	}
 
-	err = Run("openssl", "req", "-new", "-x509", "-days", "365", "-key", "ca.key", "-passin", openSSLPassword, "-out", "ca.crt", "-subj", "/CN=Heracles Intranet/emailAddress=support@example.com")
+	subject := "/CN=" + name + "/emailAddress=" + email
+	err = Run("openssl", "req", "-new", "-x509", "-days", "365", "-key", "ca.key", "-passin", openSSLPassword, "-out", "ca.crt", "-subj", subject)
 	if err != nil {
 		return
 	}
