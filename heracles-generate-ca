@@ -1,0 +1,45 @@
+#!/usr/bin/zsh -e
+
+usage() {
+  echo "usage: heracles-generate-ca <name> <email>"
+  exit 1
+}
+
+if [ "$#" -ne 2 ]; then
+  usage
+fi
+
+if [ -z "$1" ]; then
+  echo $1
+  >&2 echo "[error] no common name"
+  exit 1
+fi
+
+if [ -z "$2" ]; then
+  echo $2
+  >&2 echo "[error] no email"
+  exit 1
+fi
+
+COMMON_NAME=$1
+EMAIL=$2
+SUBJECT="/CN=$COMMON_NAME/emailAddress=$EMAIL"
+
+PASSWORD_FILE=$( mktemp )
+chmod 0600 $PASSWORD_FILE
+echo -n "Password: "
+read -s PASSWORD
+echo
+echo -n $PASSWORD > $PASSWORD_FILE
+chmod 0400 $PASSWORD_FILE
+OPEN_SSL_PASSWORD_FILE="file:$PASSWORD_FILE"
+
+openssl genrsa -aes128 -passout $OPEN_SSL_PASSWORD_FILE -out ca.key 4096
+openssl req -new -x509 -days 365 -key ca.key -passin $OPEN_SSL_PASSWORD_FILE -out ca.crt -subj $SUBJECT
+
+rm --force $PASSWORD_FILE
+
+git add ca.key
+git add ca.crt
+
+git commit --message "Generated Certificate Authority ($SUBJECT)"
