@@ -15,8 +15,12 @@ if [ -e .heracles ]; then
 fi
 
 git init
-touch .heracles
 
+touch .heracles
 git add .heracles
+
+echo "*unlocked*" > .gitignore
+git add .gitignore
+
 git commit --message "Initialized vault"
 

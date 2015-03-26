@@ -1,0 +1,45 @@
+#!/usr/bin/zsh -e
+
+usage() {
+  echo "usage: heracles-unlock-host <host>"
+  exit 1
+}
+
+validate() {
+  VALUE=$1
+  MESSAGE=$2
+
+  if [ -z "$VALUE" ]; then
+    >&2 echo "[error] $MESSAGE"
+    exit 1
+  fi
+}
+
+if [ "$#" -ne 1 ]; then
+  usage
+fi
+
+validate "$1" "no host"
+
+HOST=$1
+
+HOST_DIRECTORY="server/hosts"
+KEY_FILE="$HOST_DIRECTORY/$HOST.key"
+UNLOCKED_KEY_FILE="$HOST_DIRECTORY/$HOST.unlocked.key"
+
+PASSWORD_FILE=$( mktemp )
+chmod 0600 $PASSWORD_FILE
+echo -n "Host Password: "
+read -s PASSWORD
+echo
+echo -n $PASSWORD > $PASSWORD_FILE
+chmod 0400 $PASSWORD_FILE
+OPEN_SSL_PASSWORD_FILE="file:$PASSWORD_FILE"
+
+touch $UNLOCKED_KEY_FILE
+chmod 0600 $UNLOCKED_KEY_FILE
+openssl rsa -passin $OPEN_SSL_PASSWORD_FILE -in $KEY_FILE -out $UNLOCKED_KEY_FILE
+chmod 0400 $UNLOCKED_KEY_FILE
+
+rm --force $PASSWORD_FILE
+
