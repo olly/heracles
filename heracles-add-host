@@ -1,0 +1,65 @@
+#!/usr/bin/zsh -e
+
+usage() {
+  echo "usage: heracles-add-host <host>"
+  exit 1
+}
+
+validate() {
+  VALUE=$1
+  MESSAGE=$2
+
+  if [ -z "$VALUE" ]; then
+    >&2 echo "[error] $MESSAGE"
+    exit 1
+  fi
+}
+
+if [ "$#" -ne 1 ]; then
+  usage
+fi
+
+validate "$1" "no host"
+
+HOST=$1
+SUBJECT="/CN=$HOST"
+
+HOST_DIRECTORY="server/hosts"
+CERTIFICATE_FILE="$HOST_DIRECTORY/$HOST.crt"
+SIGNING_REQUEST_FILE="$HOST_DIRECTORY/$HOST.csr"
+KEY_FILE="$HOST_DIRECTORY/$HOST.key"
+
+mkdir --parents $HOST_DIRECTORY
+
+PASSWORD_FILE=$( mktemp )
+chmod 0600 $PASSWORD_FILE
+echo -n "Host Password: "
+read -s PASSWORD
+echo
+echo -n $PASSWORD > $PASSWORD_FILE
+chmod 0400 $PASSWORD_FILE
+OPEN_SSL_PASSWORD_FILE="file:$PASSWORD_FILE"
+
+openssl genrsa -aes128 -passout $OPEN_SSL_PASSWORD_FILE -out $KEY_FILE 2048
+openssl req -new -key $KEY_FILE -passin $OPEN_SSL_PASSWORD_FILE -out $SIGNING_REQUEST_FILE -subj $SUBJECT
+
+rm --force $PASSWORD_FILE
+
+PASSWORD_FILE=$( mktemp )
+chmod 0600 $PASSWORD_FILE
+echo -n "CA Password: "
+read -s PASSWORD
+echo
+echo -n $PASSWORD > $PASSWORD_FILE
+chmod 0400 $PASSWORD_FILE
+OPEN_SSL_PASSWORD_FILE="file:$PASSWORD_FILE"
+
+openssl x509 -req -days 365 -in $SIGNING_REQUEST_FILE -passin $OPEN_SSL_PASSWORD_FILE -CA ca.crt -CAkey ca.key -CAcreateserial -out $CERTIFICATE_FILE
+
+rm --force $PASSWORD_FILE
+
+git add $HOST_DIRECTORY
+git add ca.srl
+git commit --message "Added Host Certificate
+
+Host: $HOST"
