@@ -9,17 +9,14 @@ if [ "$#" -ne 0 ]; then
   usage
 fi
 
-SERIAL_FILE="SERIAL"
-if [ -e $SERIAL_FILE ]; then
+if [ -e .heracles ]; then
   >&2 echo "[error] vault appears to be initialized"
   exit 1
 fi
 
 git init
+touch .heracles
 
-SERIAL=0
-printf "%06d\n" $SERIAL > $SERIAL_FILE
-
-git add $SERIAL_FILE
+git add .heracles
 git commit --message "Initialized vault"
 

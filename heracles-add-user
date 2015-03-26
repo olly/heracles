@@ -58,17 +58,12 @@ echo -n $PASSWORD > $PASSWORD_FILE
 chmod 0400 $PASSWORD_FILE
 OPEN_SSL_PASSWORD_FILE="file:$PASSWORD_FILE"
 
-SERIAL_FILE="SERIAL"
-typeset -i SERIAL=$( cat $SERIAL_FILE )
-SERIAL=$((SERIAL + 1))
-printf "%06d\n" $SERIAL > $SERIAL_FILE
-
-openssl x509 -req -days 365 -in $SIGNING_REQUEST_FILE -passin $OPEN_SSL_PASSWORD_FILE -CA ca.crt -CAkey ca.key -set_serial $SERIAL -out $CERTIFICATE_FILE
+openssl x509 -req -days 365 -in $SIGNING_REQUEST_FILE -passin $OPEN_SSL_PASSWORD_FILE -CA ca.crt -CAkey ca.key -CAcreateserial -out $CERTIFICATE_FILE
 
 rm --force $PASSWORD_FILE
 
 git add $USER_DIRECTORY
-git add $SERIAL_FILE
+git add ca.srl
 git commit --message "Added User Certificate
 
 Name: $NAME
