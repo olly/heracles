@@ -28,7 +28,7 @@ HOST_DIRECTORY="server/hosts"
 KEY_FILE="$HOST_DIRECTORY/$HOST.key"
 UNLOCKED_KEY_FILE="$HOST_DIRECTORY/$HOST.unlocked.key"
 
-PASSWORD_FILE=$( mktemp )
+PASSWORD_FILE=$( mktemp -t "heracles-XXXX" )
 chmod 0600 $PASSWORD_FILE
 echo -n "Host Password: "
 read -s PASSWORD
@@ -42,5 +42,5 @@ chmod 0600 $UNLOCKED_KEY_FILE
 openssl rsa -passin $OPEN_SSL_PASSWORD_FILE -in $KEY_FILE -out $UNLOCKED_KEY_FILE
 chmod 0400 $UNLOCKED_KEY_FILE
 
-rm --force $PASSWORD_FILE
+rm -f $PASSWORD_FILE
 

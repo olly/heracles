@@ -24,7 +24,7 @@ COMMON_NAME=$1
 EMAIL=$2
 SUBJECT="/CN=$COMMON_NAME/emailAddress=$EMAIL"
 
-PASSWORD_FILE=$( mktemp )
+PASSWORD_FILE=$( mktemp -t "heracles-XXXX" )
 chmod 0600 $PASSWORD_FILE
 echo -n "Password: "
 read -s PASSWORD
@@ -36,7 +36,7 @@ OPEN_SSL_PASSWORD_FILE="file:$PASSWORD_FILE"
 openssl genrsa -aes128 -passout $OPEN_SSL_PASSWORD_FILE -out ca.key 4096
 openssl req -new -x509 -days 365 -key ca.key -passin $OPEN_SSL_PASSWORD_FILE -out ca.crt -subj $SUBJECT
 
-rm --force $PASSWORD_FILE
+rm -f $PASSWORD_FILE
 
 git add ca.key
 git add ca.crt

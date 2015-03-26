@@ -34,9 +34,9 @@ CERTIFICATE_FILE="$USER_DIRECTORY/$DEVICE.crt"
 SIGNING_REQUEST_FILE="$USER_DIRECTORY/$DEVICE.csr"
 KEY_FILE="$USER_DIRECTORY/$DEVICE.key"
 
-mkdir --parents $USER_DIRECTORY
+mkdir -p $USER_DIRECTORY
 
-PASSWORD_FILE=$( mktemp )
+PASSWORD_FILE=$( mktemp -t "heracles-XXXX" )
 chmod 0600 $PASSWORD_FILE
 echo -n "User Password: "
 read -s PASSWORD
@@ -48,9 +48,9 @@ OPEN_SSL_PASSWORD_FILE="file:$PASSWORD_FILE"
 openssl genrsa -aes128 -passout $OPEN_SSL_PASSWORD_FILE -out $KEY_FILE 2048
 openssl req -new -key $KEY_FILE -passin $OPEN_SSL_PASSWORD_FILE -out $SIGNING_REQUEST_FILE -subj $SUBJECT
 
-rm --force $PASSWORD_FILE
+rm -f $PASSWORD_FILE
 
-PASSWORD_FILE=$( mktemp )
+PASSWORD_FILE=$( mktemp -t "heracles-XXXX" )
 chmod 0600 $PASSWORD_FILE
 echo -n "CA Password: "
 read -s PASSWORD
@@ -61,7 +61,7 @@ OPEN_SSL_PASSWORD_FILE="file:$PASSWORD_FILE"
 
 openssl x509 -req -days 365 -in $SIGNING_REQUEST_FILE -passin $OPEN_SSL_PASSWORD_FILE -CA ca.crt -CAkey ca.key -CAcreateserial -out $CERTIFICATE_FILE
 
-rm --force $PASSWORD_FILE
+rm -f $PASSWORD_FILE
 
 git add $USER_DIRECTORY
 git add ca.srl
