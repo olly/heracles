@@ -1,0 +1,76 @@
+#!/usr/bin/zsh -e
+
+usage() {
+  echo "usage: heracles-add-user <name> <email> <device>"
+  exit 1
+}
+
+validate() {
+  VALUE=$1
+  MESSAGE=$2
+
+  if [ -z "$VALUE" ]; then
+    >&2 echo "[error] $MESSAGE"
+    exit 1
+  fi
+}
+
+if [ "$#" -ne 3 ]; then
+  usage
+fi
+
+validate "$1" "no name"
+validate "$2" "no email"
+validate "$3" "no device"
+
+NAME=$1
+EMAIL=$2
+DEVICE=$3
+SUBJECT="/CN=$NAME/emailAddress=$EMAIL"
+
+USER_DIRECTORY="client/users/$EMAIL"
+CERTIFICATE_FILE="$USER_DIRECTORY/$DEVICE.crt"
+SIGNING_REQUEST_FILE="$USER_DIRECTORY/$DEVICE.csr"
+KEY_FILE="$USER_DIRECTORY/$DEVICE.key"
+
+mkdir --parents $USER_DIRECTORY
+
+PASSWORD_FILE=$( mktemp )
+chmod 0600 $PASSWORD_FILE
+echo -n "User Password: "
+read -s PASSWORD
+echo
+echo -n $PASSWORD > $PASSWORD_FILE
+chmod 0400 $PASSWORD_FILE
+OPEN_SSL_PASSWORD_FILE="file:$PASSWORD_FILE"
+
+openssl genrsa -aes128 -passout $OPEN_SSL_PASSWORD_FILE -out $KEY_FILE 2048
+openssl req -new -key $KEY_FILE -passin $OPEN_SSL_PASSWORD_FILE -out $SIGNING_REQUEST_FILE -subj $SUBJECT
+
+rm --force $PASSWORD_FILE
+
+PASSWORD_FILE=$( mktemp )
+chmod 0600 $PASSWORD_FILE
+echo -n "CA Password: "
+read -s PASSWORD
+echo
+echo -n $PASSWORD > $PASSWORD_FILE
+chmod 0400 $PASSWORD_FILE
+OPEN_SSL_PASSWORD_FILE="file:$PASSWORD_FILE"
+
+SERIAL_FILE="SERIAL"
+typeset -i SERIAL=$( cat $SERIAL_FILE )
+SERIAL=$((SERIAL + 1))
+printf "%06d\n" $SERIAL > $SERIAL_FILE
+
+openssl x509 -req -days 365 -in $SIGNING_REQUEST_FILE -passin $OPEN_SSL_PASSWORD_FILE -CA ca.crt -CAkey ca.key -set_serial $SERIAL -out $CERTIFICATE_FILE
+
+rm --force $PASSWORD_FILE
+
+git add $USER_DIRECTORY
+git add $SERIAL_FILE
+git commit --message "Added User Certificate
+
+Name: $NAME
+Email: $EMAIL
+Device: $DEVICE"
