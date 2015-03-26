@@ -1,9 +1,0 @@
-[submodule "vendor/src/github.com/mgutz/ansi"]
-	path = vendor/src/github.com/mgutz/ansi
-	url = https://github.com/mgutz/ansi.git
-[submodule "vendor/src/github.com/howeyc/gopass"]
-	path = vendor/src/github.com/howeyc/gopass
-	url = https://github.com/howeyc/gopass.git
-[submodule "vendor/src/golang.org/x/crypto"]
-	path = vendor/src/golang.org/x/crypto
-	url = https://github.com/golang/crypto.git
