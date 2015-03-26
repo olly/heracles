@@ -40,4 +40,7 @@ rm --force $PASSWORD_FILE
 git add ca.key
 git add ca.crt
 
-git commit --message "Generated Certificate Authority ($SUBJECT)"
+git commit --message "Generated Certificate Authority
+
+Name: $COMMON_NAME
+Email: $EMAIL"
