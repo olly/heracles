@@ -1,0 +1,20 @@
+#!/usr/bin/zsh -e
+
+usage() {
+  echo "usage: heracles-update-trusted-clients"
+  exit 1
+}
+
+if [ "$#" -ne 0 ]; then
+  usage
+fi
+
+TRUSTED_CLIENTS_FILE="client/trusted-clients"
+CLIENT_CERTIFICATES=( client/**/*.crt(N) )
+
+if [ -n "$CLIENT_CERTIFICATES" ]; then
+  cat $CLIENT_CERTIFICATES > $TRUSTED_CLIENTS_FILE
+  git add $TRUSTED_CLIENTS_FILE
+  git commit --message "Updated trusted-clients"
+fi
+

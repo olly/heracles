@@ -69,3 +69,5 @@ git commit --message "Added User Certificate
 Name: $NAME
 Email: $EMAIL
 Device: $DEVICE"
+
+heracles-update-trusted-clients
